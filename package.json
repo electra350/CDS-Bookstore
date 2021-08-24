@@ -8,7 +8,10 @@
     "dependencies": {
         "@sap/cds": "^5",
         "express": "^4",
-        "hdb": "^0.18.3"
+        "hdb": "^0.18.3",
+        "@sap/cds-mtx": "^2",
+        "@sap/xssec": "^3",
+        "passport": "^0.4.0"
     },
     "devDependencies": {
         "@sap/hdi-deploy": "^4.1.0",
@@ -45,11 +48,18 @@
     "cds": {
         "requires": {
             "db": {
-                "kind": "sql",
+                "kind": "hana",
+                "vcap": {
+                    "label": "service-manager"
+                },
                 "model": "*",
                 "credentials": {
                     "database": "bookstore.db"
                 }
+            },
+            "multitenancy": true,
+            "uaa": {
+                "kind": "xsuaa"
             }
         },
         "hana": {

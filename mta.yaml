@@ -42,11 +42,18 @@ modules:
      buildpack: nodejs_buildpack
    requires:
     # Resources extracted from CAP configuration
+    - name: bookstore-xsuaa
     - name: bookstore-db
+    - name: bookstore-sm
+   properties:
+     SAP_JWT_TRUST_ACL: [{"clientid":"*","identityzone":"sap-provisioning"}]
    provides:
     - name: srv-api      # required by consumers of CAP services (e.g. approuter)
       properties:
         srv-url: ${default-url}
+    - name: mtx-api      # potentially required by approuter
+      properties:
+        mtx-url: ${default-url}
 
  # -------------------- SIDECAR MODULE ------------------------
  - name: bookstore-db-deployer
@@ -73,4 +80,50 @@ resources:
    properties:
      hdi-service-name: ${service-name}
 
+# ------------------------------------------------------------
+ - name: bookstore-sm
+# ------------------------------------------------------------
+   type: org.cloudfoundry.managed-service
+   parameters:
+     service: service-manager
+     service-plan: container
+   properties:
+     hdi-service-name: ${service-name}
 
+
+# ------------------------------------------------------------
+ - name: bookstore-xsuaa
+# ------------------------------------------------------------
+   type: org.cloudfoundry.managed-service
+   parameters:
+     service: xsuaa
+     service-plan: application  
+     path: ./xs-security.json
+     config:
+       xsappname: bookstore-${space}    #  name + space dependency
+       tenant-mode: shared
+
+
+ - name: bookstore-saas
+   type: org.cloudfoundry.managed-service
+   requires:
+      - name: bookstore-xsuaa
+      - name: mtx-api 
+        properties: 
+           prop: ~{mtx-url} 
+        parameters: 
+           param: ~{mtx-url} 
+   parameters:
+      service: saas-registry
+      service-plan: application
+      config:
+         xsappname: bookstore-${space}
+         appName: bookstore
+         displayName: bookstore
+         description: A simple CAP project.
+         #category: 'Category'
+         appUrls:
+            onSubscription: ~{mtx-api/mtx-url}/mtx/v1/provisioning/tenant/{tenantId}
+            onSubscriptionAsync: false
+            onUnSubscriptionAsync: false
+            callbackTimeoutMillis: 300000
