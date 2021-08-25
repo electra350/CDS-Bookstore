@@ -19,19 +19,32 @@ build-parameters:
 modules:
  ##############    UI MODULE   ##########################
  - name: bookstore-ui
-   type: nodejs
+   type: html5
    path: app
+   build-parameters:
+      # Don't package the dependencies if you're running into EINTEGRITY issues
+      ignore: ["default-env.json", "node_modules/", "package-lock.json"]
+      # Suppress the calling of npm install by listing no commands
+      builder: custom
+      commands: []
    parameters:
      memory: 256M
      disk-quota: 256M
+   properties:
+      TENANT_HOST_PATTERN: '^(.*)-${space}-${app-name}.${default-domain}'
+   provides:
+    - name: Router_api
+      properties:
+         url: ${default-url}
+         application: ${app-name}
    requires:
+     - name: bookstore-xsuaa
      - name: srv-api
        group: destinations
        properties:
-         forwardAuthToken: true
-         strictSSL: true
-         name: srv-api
-         url: ~{srv-url}
+          name: srv-api
+          url: ~{srv-url}
+          forwardAuthToken: true 
 
  # --------------------- SERVER MODULE ------------------------
  - name: bookstore-srv
@@ -95,9 +108,11 @@ resources:
  - name: bookstore-xsuaa
 # ------------------------------------------------------------
    type: org.cloudfoundry.managed-service
+   requires:
+    - name: Router_api
    parameters:
      service: xsuaa
-     service-plan: application  
+     service-plan: application 
      path: ./xs-security.json
      config:
        xsappname: bookstore-${space}    #  name + space dependency

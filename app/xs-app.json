@@ -1,13 +1,48 @@
 {
     "welcomeFile": "webapp/",
-    "authenticationMethod": "none",
-    "routes": [{
+    "authenticationMethod": "route",
+    "routes": [
+        {
+      "source": "(mtx/v1/provisioning/tenant/)(.*)",
+      "destination": "srv-api",
+      "httpMethods": ["GET", "PUT", "DELETE"],
+      "csrfProtection": true,
+      "authenticationType": "none"
+    },
+    {
         "source": "^/webapp/(.*)$",
         "target": "$1",
-        "localDir": "webapp/"
-    }, {
+        "localDir": "webapp/",
+        "authenticationType": "xsuaa"
+    }, 
+    {
         "source": "^(.*)$",
-        "destination": "srv-api"
-    }]
+        "destination": "srv-api",
+        "authenticationType": "xsuaa"
+    },
+    {
+      "source": "(srv/)(.*)",
+      "destination": "srv-api",
+      "csrfProtection": true,
+      "authenticationType": "xsuaa"
+    },
+    {
+      "source": "(catalog/)(.*)",
+      "destination": "srv-api",
+      "csrfProtection": true,
+      "authenticationType": "xsuaa"
+    },
+    {
+      "source": "(stats/)(.*)",
+      "destination": "srv-api",
+      "csrfProtection": true,
+      "authenticationType": "xsuaa"
+    },
+    {
+      "localDir": "resources",
+      "source": "^/(.*)",
+      "authenticationType": "none"
+    }
+   ]
 }
 
